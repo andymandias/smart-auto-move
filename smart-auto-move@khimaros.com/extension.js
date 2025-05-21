@@ -195,6 +195,11 @@ function windowSectionHash(win) {
 	return win.get_wm_class();
 }
 
+function windowMonitorHash(win) {
+	let workArea = win.get_work_area_current_monitor();
+	return workArea.width.toString() + "x" + workArea.height.toString();
+}
+
 function windowHash(win) {
 	return win.get_id();
 }
@@ -219,25 +224,29 @@ function windowNewerThan(win, age) {
 
 function pushSavedWindow(win) {
 	let wsh = windowSectionHash(win);
-	//debug('pushSavedWindow() - start: ' + wsh + ', ' + win.get_title());
+	//debug('pushSavedWindow() - start: ' + wsh + ' ' + wmh + ', ' + win.get_title());
 	if (wsh === null) return false;
 	if (!savedWindows.hasOwnProperty(wsh))
-		savedWindows[wsh] = new Array();
+		savedWindows[wsh] = new Object();
+	let wmh = windowMonitorHash(win);
+	if (!savedWindows[wsh].hasOwnProperty(wmh))
+		savedWindows[wsh][wmh] = new Array();
 	let sw = windowData(win);
-	savedWindows[wsh].push(sw);
+	savedWindows[wsh][wmh].push(sw);
 	debug('pushSavedWindow() - pushed: ' + JSON.stringify(sw));
 	return true;
 }
 
 function updateSavedWindow(win) {
 	let wsh = windowSectionHash(win);
-	//debug('updateSavedWindow() - start: ' + wsh + ', ' + win.get_title());
-	let [swi, _] = Common.findSavedWindow(savedWindows, wsh, { hash: windowHash(win) }, 1.0);
+	let wmh = windowMonitorHash(win);
+	//debug('updateSavedWindow() - start: ' + wsh + ' ' + wmh + ', ' + win.get_title());
+	let [swi, _] = Common.findSavedWindow(savedWindows, wsh, wmh, { hash: windowHash(win) }, 1.0);
 	if (swi === undefined)
 		return false;
 	let sw = windowData(win);
-	if (windowDataEqual(savedWindows[wsh][swi], sw)) return true;
-	savedWindows[wsh][swi] = sw;
+	if (windowDataEqual(savedWindows[wsh][wmh][swi], sw)) return true;
+	savedWindows[wsh][wmh][swi] = sw;
 	debug('updateSavedWindow() - updated: ' + swi + ', ' + JSON.stringify(sw));
 	return true;
 }
@@ -307,16 +316,17 @@ function moveWindow(win, sw) {
 
 function restoreWindow(win) {
 	let wsh = windowSectionHash(win);
+	let wmh = windowMonitorHash(win);
 
 	let sw;
 
-	let [swi, _] = Common.findSavedWindow(savedWindows, wsh, { hash: windowHash(win), occupied: true }, 1.0);
+	let [swi, _] = Common.findSavedWindow(savedWindows, wsh, wmh, { hash: windowHash(win), occupied: true }, 1.0);
 
 	if (swi !== undefined) return false;
 
 	if (!windowReady(win)) return true; // try again later
 
-	[swi, sw] = Common.matchedWindow(savedWindows, overrides, wsh, win.get_title(), matchThreshold);
+	[swi, sw] = Common.matchedWindow(savedWindows, overrides, wsh, wmh, win.get_title(), matchThreshold);
 
 	if (swi === undefined) return false;
 
@@ -337,7 +347,7 @@ function restoreWindow(win) {
 
 	debug('restoreWindow() - moved: ' + pWinRepr + ' => ' + JSON.stringify(nsw));
 
-	savedWindows[wsh][swi] = nsw;
+	savedWindows[wsh][wmh][swi] = nsw;
 
 	return true;
 }
@@ -351,12 +361,14 @@ function cleanupWindows() {
 	});
 
 	Object.keys(savedWindows).forEach(function (wsh) {
-		let sws = savedWindows[wsh];
-		sws.forEach(function (sw) {
-			if (sw.occupied && !found.has(sw.hash)) {
-				sw.occupied = false;
-				debug('cleanupWindows() - deoccupy: ' + JSON.stringify(sw));
-			}
+		Object.keys(savedWindows[wsh]).forEach(function (wmh) {
+			let sws = savedWindows[wsh][wmh];
+			sws.forEach(function (sw) {
+				if (sw.occupied && !found.has(sw.hash)) {
+					sw.occupied = false;
+					debug('cleanupWindows() - deoccupy: ' + JSON.stringify(sw));
+				}
+			});
 		});
 	});
 }
@@ -528,8 +540,10 @@ function debug(message) {
 
 function dumpSavedWindows() {
 	Object.keys(savedWindows).forEach(function (wsh) {
-		let sws = savedWindows[wsh];
-		debug('dumpSavedwindows(): ' + wsh + ' ' + JSON.stringify(sws));
+		Object.keys(savedWindows[wsh]).forEach(function (wmh) {
+			let sws = savedWindows[wsh][wmh];
+			debug('dumpSavedwindows(): ' + wsh + ' ' + wmh + ' ' + JSON.stringify(sws));
+		});
 	});
 }
 
