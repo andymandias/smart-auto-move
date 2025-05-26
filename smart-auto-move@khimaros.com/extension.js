@@ -252,8 +252,6 @@ function updateSavedWindow(win) {
 }
 
 function ensureSavedWindow(win) {
-	let wh = windowHash(win);
-
 	if (windowNewerThan(win, startupDelayMs)) return;
 
 	if (freezeSaves) return;
@@ -357,14 +355,14 @@ function cleanupWindows() {
 
 	global.get_window_actors().forEach(function (actor) {
 		let win = actor.get_meta_window();
-		found.set(windowHash(win), true);
+		found.set(windowHash(win), windowMonitorHash(win));
 	});
 
 	Object.keys(savedWindows).forEach(function (wsh) {
 		Object.keys(savedWindows[wsh]).forEach(function (wmh) {
 			let sws = savedWindows[wsh][wmh];
 			sws.forEach(function (sw) {
-				if (sw.occupied && !found.has(sw.hash)) {
+				if (sw.occupied && found.get(sw.hash) !== wmh) {
 					sw.occupied = false;
 					debug('cleanupWindows() - deoccupy: ' + JSON.stringify(sw));
 				}
