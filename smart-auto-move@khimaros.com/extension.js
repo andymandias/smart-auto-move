@@ -223,30 +223,31 @@ function windowNewerThan(win, age) {
 //// WINDOW SAVE / RESTORE
 
 function pushSavedWindow(win) {
-	let wsh = windowSectionHash(win);
-	//debug('pushSavedWindow() - start: ' + wsh + ' ' + wmh + ', ' + win.get_title());
-	if (wsh === null) return false;
-	if (!savedWindows.hasOwnProperty(wsh))
-		savedWindows[wsh] = new Object();
 	let wmh = windowMonitorHash(win);
-	if (!savedWindows[wsh].hasOwnProperty(wmh))
-		savedWindows[wsh][wmh] = new Array();
+	if (wmh === null) return false;
+	let wsh = windowSectionHash(win);
+	if (wsh === null) return false;
+	//debug('pushSavedWindow() - start: ' + wmh + ' ' + wsh + ', ' + win.get_title());
+	if (!savedWindows.hasOwnProperty(wmh))
+		savedWindows[wmh] = new Object();
+	if (!savedWindows[wmh].hasOwnProperty(wsh))
+		savedWindows[wmh][wsh] = new Array();
 	let sw = windowData(win);
-	savedWindows[wsh][wmh].push(sw);
+	savedWindows[wmh][wsh].push(sw);
 	debug('pushSavedWindow() - pushed: ' + JSON.stringify(sw));
 	return true;
 }
 
 function updateSavedWindow(win) {
-	let wsh = windowSectionHash(win);
 	let wmh = windowMonitorHash(win);
-	//debug('updateSavedWindow() - start: ' + wsh + ' ' + wmh + ', ' + win.get_title());
-	let [swi, _] = Common.findSavedWindow(savedWindows, wsh, wmh, { hash: windowHash(win) }, 1.0);
+	let wsh = windowSectionHash(win);
+	//debug('updateSavedWindow() - start: ' + wmh + ' ' + wsh + ', ' + win.get_title());
+	let [swi, _] = Common.findSavedWindow(savedWindows, wmh, wsh, { hash: windowHash(win) }, 1.0);
 	if (swi === undefined)
 		return false;
 	let sw = windowData(win);
-	if (windowDataEqual(savedWindows[wsh][wmh][swi], sw)) return true;
-	savedWindows[wsh][wmh][swi] = sw;
+	if (windowDataEqual(savedWindows[wmh][wsh][swi], sw)) return true;
+	savedWindows[wmh][wsh][swi] = sw;
 	debug('updateSavedWindow() - updated: ' + swi + ', ' + JSON.stringify(sw));
 	return true;
 }
@@ -313,18 +314,18 @@ function moveWindow(win, sw) {
 }
 
 function restoreWindow(win) {
-	let wsh = windowSectionHash(win);
 	let wmh = windowMonitorHash(win);
+	let wsh = windowSectionHash(win);
 
 	let sw;
 
-	let [swi, _] = Common.findSavedWindow(savedWindows, wsh, wmh, { hash: windowHash(win), occupied: true }, 1.0);
+	let [swi, _] = Common.findSavedWindow(savedWindows, wmh, wsh, { hash: windowHash(win), occupied: true }, 1.0);
 
 	if (swi !== undefined) return false;
 
 	if (!windowReady(win)) return true; // try again later
 
-	[swi, sw] = Common.matchedWindow(savedWindows, overrides, wsh, wmh, win.get_title(), matchThreshold);
+	[swi, sw] = Common.matchedWindow(savedWindows, overrides, wmh, wsh, win.get_title(), matchThreshold);
 
 	if (swi === undefined) return false;
 
@@ -345,7 +346,7 @@ function restoreWindow(win) {
 
 	debug('restoreWindow() - moved: ' + pWinRepr + ' => ' + JSON.stringify(nsw));
 
-	savedWindows[wsh][wmh][swi] = nsw;
+	savedWindows[wmh][wsh][swi] = nsw;
 
 	return true;
 }
@@ -358,9 +359,9 @@ function cleanupWindows() {
 		found.set(windowHash(win), windowMonitorHash(win));
 	});
 
-	Object.keys(savedWindows).forEach(function (wsh) {
-		Object.keys(savedWindows[wsh]).forEach(function (wmh) {
-			let sws = savedWindows[wsh][wmh];
+	Object.keys(savedWindows).forEach(function (wmh) {
+		Object.keys(savedWindows[wmh]).forEach(function (wsh) {
+			let sws = savedWindows[wmh][wsh];
 			sws.forEach(function (sw) {
 				if (sw.occupied && found.get(sw.hash) !== wmh) {
 					sw.occupied = false;
@@ -537,10 +538,10 @@ function debug(message) {
 }
 
 function dumpSavedWindows() {
-	Object.keys(savedWindows).forEach(function (wsh) {
-		Object.keys(savedWindows[wsh]).forEach(function (wmh) {
-			let sws = savedWindows[wsh][wmh];
-			debug('dumpSavedwindows(): ' + wsh + ' ' + wmh + ' ' + JSON.stringify(sws));
+	Object.keys(savedWindows).forEach(function (wmh) {
+		Object.keys(savedWindows[wmh]).forEach(function (wsh) {
+			let sws = savedWindows[wmh][wsh];
+			debug('dumpSavedwindows(): ' + wmh + ' ' + wsh + ' ' + JSON.stringify(sws));
 		});
 	});
 }

@@ -138,7 +138,15 @@ function buildPrefsWidget() {
 }
 
 function loadOverridesSetting(list_widget, list_objects) {
-    let overrides = JSON.parse(settings.get_string(Common.SETTINGS_KEY_OVERRIDES));
+    let overrides;
+
+    try {
+        overrides = JSON.parse(settings.get_string(Common.SETTINGS_KEY_OVERRIDES));
+
+        if (overrides === null) { return; }
+    } catch (e) {
+        return;
+    }
     
     // TODO: deduplicate this with similar logic in loadSavedWindowsSetting()
     let current_row = list_widget.get_first_child();
@@ -222,7 +230,15 @@ function loadOverridesSetting(list_widget, list_objects) {
 }
 
 function loadSavedWindowsSetting(list_widget, list_objects) {
-    let saved_windows = JSON.parse(settings.get_string(Common.SETTINGS_KEY_SAVED_WINDOWS));
+    let saved_windows;
+
+    try {
+        saved_windows = JSON.parse(settings.get_string(Common.SETTINGS_KEY_SAVED_WINDOWS));
+
+        if (saved_windows === null) { return; }
+    } catch (e) {
+        return;
+    }
 
     let current_row = list_widget.get_first_child();
     while (current_row !== null) {
@@ -239,9 +255,9 @@ function loadSavedWindowsSetting(list_widget, list_objects) {
         list_widget.remove(prev_row);
     }
 
-    Object.keys(saved_windows).forEach(function (wsh) {
-        Object.keys(saved_windows[wsh]).forEach(function (wmh) {
-            let sws = saved_windows[wsh][wmh];
+    Object.keys(saved_windows).forEach(function (wmh) {
+        Object.keys(saved_windows[wmh]).forEach(function (wsh) {
+            let sws = saved_windows[wmh][wsh];
             sws.forEach(function (sw, swi) {
                 let row_templates = new TemplatesBox();
 
@@ -249,7 +265,7 @@ function loadSavedWindowsSetting(list_widget, list_objects) {
                 row.unparent();
 
                 let label_widget = row_templates._saved_window_label;
-                label_widget.set_label(wsh + ' - ' + wmh + ' - ' + sw.title);
+                label_widget.set_label(wmh + ' - ' + wsh + ' - ' + sw.title);
                 let label_attrs = Pango.AttrList.new();
                 if (!sw.occupied) label_attrs.insert(Pango.attr_strikethrough_new(true));
                 label_widget.set_attributes(label_attrs);
@@ -258,7 +274,7 @@ function loadSavedWindowsSetting(list_widget, list_objects) {
                 let delete_signal = delete_widget.connect('clicked', function () {
                     //log('DELETE SAVED WINDOW: ' + JSON.stringify(sw));
                     sws.splice(swi, 1);
-                    if (sws.length < 1) delete (saved_windows[wsh][wmh]);
+                    if (sws.length < 1) delete (saved_windows[wmh][wsh]);
                     settings.set_string(Common.SETTINGS_KEY_SAVED_WINDOWS, JSON.stringify(saved_windows));
                 });
 

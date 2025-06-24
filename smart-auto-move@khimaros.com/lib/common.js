@@ -74,19 +74,19 @@ function scoreWindow(sw, query) {
 	return score;
 }
 
-function findSavedWindow(saved_windows, wsh, wmh, query, threshold) {
-	if (!saved_windows.hasOwnProperty(wsh)) {
-		//debug('findSavedWindow() - no such window section: ' + wsh)
-		return [undefined, undefined];
-	}
-
-	if (!saved_windows[wsh].hasOwnProperty(wmh)) {
+function findSavedWindow(saved_windows, wmh, wsh, query, threshold) {
+	if (!saved_windows.hasOwnProperty(wmh)) {
 		//debug('findSavedWindow() - no such window monitor: ' + wmh)
 		return [undefined, undefined];
 	}
 
+	if (!saved_windows[wmh].hasOwnProperty(wsh)) {
+		//debug('findSavedWindow() - no such window section: ' + wsh)
+		return [undefined, undefined];
+	}
+
 	let scores = new Map();
-	saved_windows[wsh][wmh].forEach(function (sw, swi) {
+	saved_windows[wmh][wsh].forEach(function (sw, swi) {
 		let score = scoreWindow(sw, query);
 		scores.set(swi, score);
 	});
@@ -102,7 +102,7 @@ function findSavedWindow(saved_windows, wsh, wmh, query, threshold) {
 	if (best_score >= threshold)
 		found = best_swi;
 
-	//debug('findSavedWindow() - found: ' + found + ' ' + ' ' + best_score + JSON.stringify(savedWindows[wsh][wmh][found]));
+	//debug('findSavedWindow() - found: ' + found + ' ' + ' ' + best_score + JSON.stringify(savedWindows[wmh][wsh][found]));
 
 	return [found, best_score];
 }
@@ -136,17 +136,17 @@ function findOverride(overrides, wsh, sw, threshold) {
 	return override;
 }
 
-function matchedWindow(saved_windows, overrides, wsh, wmh, title, default_match_threshold) {
+function matchedWindow(saved_windows, overrides, wmh, wsh, title, default_match_threshold) {
 	let o = findOverride(overrides, wsh, { title: title }, 1.0);
 
 	let threshold = default_match_threshold;
 	if (o !== undefined && o.threshold !== undefined) threshold = o.threshold;
 
-	let [swi, _] = findSavedWindow(saved_windows, wsh, wmh, { title: title, occupied: false }, threshold);
+	let [swi, _] = findSavedWindow(saved_windows, wmh, wsh, { title: title, occupied: false }, threshold);
 
 	if (swi === undefined) return [undefined, undefined];
 
-	let sw = saved_windows[wsh][wmh][swi];
+	let sw = saved_windows[wmh][wsh][swi];
 
 	return [swi, sw];
 }

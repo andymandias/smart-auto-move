@@ -25,53 +25,53 @@ assertScore(
     0.0,
 );
 
-function assertFoundWindow(saved_windows, wsh, wmh, query, threshold, want_found) {
-    let [found, best_score] = Common.findSavedWindow(saved_windows, wsh, wmh, query, threshold);
+function assertFoundWindow(saved_windows, wmh, wsh, query, threshold, want_found) {
+    let [found, best_score] = Common.findSavedWindow(saved_windows, wmh, wsh, query, threshold);
     console.assert(want_found === found, {want_found: want_found, found: found, best_score: best_score, saved_windows: saved_windows, query: query, threshold: threshold});
 }
 
 assertFoundWindow(
-    {'firefox': { '1024x768': [
+    { '1024x768': {'firefox': [
         {title: 'Wikipedia - The Encyclopedia', occupied: false},
         {title: 'GMail - user@gmail.com (1)', occupied: false},
     ]}},
-    'firefox', {title: 'GMail - user@gmail.com (3)', occupied: false}, 0.7,
+    '1024x768', 'firefox', {title: 'GMail - user@gmail.com (3)', occupied: false}, 0.7,
     1,
 );
 
 assertFoundWindow(
-    {'gnome-terminal': [
+    { '1024x768': {'gnome-terminal': [
         {hash: 1001, title: 'user@host: ~', occupied: false},
         {hash: 1002, title: 'user@host: ~/src', occupied: false},
         {hash: 1003, title: 'user@host: ~/scratch'}
-    ]},
-    'gnome-terminal', {title: 'user@host :~/src/fnord', occupied: false}, 0.7,
+    ]}},
+    '1024x768', 'gnome-terminal', {title: 'user@host :~/src/fnord', occupied: false}, 0.7,
     1,
 );
 
 assertFoundWindow(
-    {'gnome-terminal': [
+    { '1024x768': {'gnome-terminal': [
         {title: 'user@host: ~/src/github.com/khimaros/smart-auto-move', occupied: false},
-    ]},
-    'gnome-terminal', {title: 'user@host: ~', occupied: false}, 0.35,
+    ]}},
+    '1024x768', 'gnome-terminal', {title: 'user@host: ~', occupied: false}, 0.35,
     0,
 );
 
 assertFoundWindow(
-    {'gnome-terminal': [
+    { '1024x768': {'gnome-terminal': [
         {title: 'user@host: ~/src/github.com/khimaros/smart-auto-move', occupied: false},
         {title: 'user@host: ~/src', occupied: false},
         {title: 'user@host: ~', occupied: false},
-    ]},
-    'gnome-terminal', {title: 'user@host: ~', occupied: false}, 0.0,
+    ]}},
+    '1024x768', 'gnome-terminal', {title: 'user@host: ~', occupied: false}, 0.0,
     2,
 );
 
 assertFoundWindow(
-    {'org.gnome.Nautilus': [
+    { '1024x768': {'org.gnome.Nautilus': [
         {title: 'Documents', occupied: false},
-    ]},
-    'org.gnome.Nautilus', {title: 'Downloads', occupied: false}, 0.7,
+    ]}},
+    '1024x768', 'org.gnome.Nautilus', {title: 'Downloads', occupied: false}, 0.7,
     undefined,
 );
 
@@ -98,18 +98,18 @@ assertFoundOverride(
     {action: 1, threshold: 0.3},
 );
 
-function assertMatchedWindow(saved_windows, overrides, wsh, wmh, title, default_match_threshold, want_swi, want_sw) {
-    let [swi, sw] = Common.matchedWindow(saved_windows, overrides, wsh, wmh, title, default_match_threshold);
-    console.assert(want_swi === swi && JSON.stringify(want_sw) === JSON.stringify(sw), {want_swi: want_swi, swi: swi, want_sw: want_sw, sw: sw, saved_windows: saved_windows, overrides: overrides, wsh: wsh, wmh: wmh, title: title, default_match_threshold: default_match_threshold});
+function assertMatchedWindow(saved_windows, overrides, wmh, wsh, title, default_match_threshold, want_swi, want_sw) {
+    let [swi, sw] = Common.matchedWindow(saved_windows, overrides, wmh, wsh, title, default_match_threshold);
+    console.assert(want_swi === swi && JSON.stringify(want_sw) === JSON.stringify(sw), {want_swi: want_swi, swi: swi, want_sw: want_sw, sw: sw, saved_windows: saved_windows, overrides: overrides, wmh: wmh, wsh: wsh, title: title, default_match_threshold: default_match_threshold});
 }
 
 assertMatchedWindow(
-    {'gnome-terminal-server':  {'1024x768': [
+    {'1024x768': {'gnome-terminal-server': [
         {title: 'user@host: ~/src/github.com/khimaros/smart-auto-move', occupied: false},
     ]}},
     {'gnome-terminal-server': [
         {action: 1, threshold: 0.3},
     ]},
-    'gnome-terminal-server', '1024x768', 'user@host: ~', 0.7,
+    '1024x768', 'gnome-terminal-server', 'user@host: ~', 0.7,
     0, {title: 'user@host: ~/src/github.com/khimaros/smart-auto-move', occupied: false},
 );
